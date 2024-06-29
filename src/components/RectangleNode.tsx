@@ -1,16 +1,31 @@
-import { Card } from "@mantine/core";
+import { ActionIcon, Card, Group, Text } from "@mantine/core";
+import { IconPlayerPlay } from "@tabler/icons-react";
 import { NodeProps } from "reactflow";
-import { Rectangle } from "../data/Rectangle";
+import { CustomNode } from "../data/CustomNode";
 
-export const RectangleNode = ({ data }: NodeProps<Rectangle>) => {
+export const RectangleNode = ({ data }: NodeProps<CustomNode>) => {
   return (
     <>
       <Card
         styles={{
-          root: { borderRadius: data.radius, backgroundColor: data.color },
+          root: { borderRadius: "5px", backgroundColor: data.color },
         }}
+        p={6}
       >
-        {data.title}
+        <Text fw={200} styles={{ root: { fontSize: 15 } }}>
+          {data.description}
+        </Text>
+
+        <Group grow justify="flex-end">
+          <Text fw={200} styles={{ root: { fontSize: 8 } }}>
+            {data.pomodoroTime}
+          </Text>
+          {data.id !== "root" && (
+            <ActionIcon variant="gradient" size={8} color="green">
+              <IconPlayerPlay size={8} />
+            </ActionIcon>
+          )}
+        </Group>
       </Card>
     </>
   );
