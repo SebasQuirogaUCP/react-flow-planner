@@ -1,5 +1,5 @@
 import { Handle, NodeProps, NodeResizer, Position } from "reactflow";
-import { CustomNode } from "../data/CustomNode";
+import { CustomNode } from "../../data/CustomNode";
 
 export function TestingNode({ data }: NodeProps<CustomNode>) {
   return (

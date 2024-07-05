@@ -1,6 +1,6 @@
 import { Avatar, Text } from "@mantine/core";
 import { NodeProps } from "reactflow";
-import { CustomNode } from "../data/CustomNode";
+import { CustomNode } from "../../data/CustomNode";
 
 export const BubbleNode = ({ data }: NodeProps<CustomNode>) => {
   return (

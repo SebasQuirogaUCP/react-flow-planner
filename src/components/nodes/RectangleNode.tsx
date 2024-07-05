@@ -1,7 +1,7 @@
 import { ActionIcon, Card, Group, Text } from "@mantine/core";
 import { IconPlayerPlay } from "@tabler/icons-react";
-import { NodeProps } from "reactflow";
-import { CustomNode } from "../data/CustomNode";
+import { Handle, NodeProps, Position } from "reactflow";
+import { CustomNode } from "../../data/CustomNode";
 
 export const RectangleNode = ({ data }: NodeProps<CustomNode>) => {
   return (
@@ -27,6 +27,10 @@ export const RectangleNode = ({ data }: NodeProps<CustomNode>) => {
           )}
         </Group>
       </Card>
+
+      {data.id !== "root" && <Handle position={Position.Top} type="target" />}
+
+      <Handle position={Position.Bottom} type="source" />
     </>
   );
 };

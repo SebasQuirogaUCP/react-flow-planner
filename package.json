@@ -10,12 +10,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@mantine/colors-generator": "^.11.1",
     "@mantine/core": "7.10.2",
     "@mantine/dates": "7.11.0",
     "@mantine/form": "7.11.0",
     "@mantine/hooks": "7.10.2",
     "@tabler/icons-react": "3.7.0",
     "@types/node": "20.14.7",
+    "nanoid": "^5.0.7",
     "postcss": "8.4.38",
     "postcss-preset-mantine": "1.15.0",
     "postcss-simple-vars": "7.0.1",

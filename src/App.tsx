@@ -1,3 +1,4 @@
+import { generateColorsMap } from "@mantine/colors-generator";
 import {
   AppShell,
   Burger,
@@ -6,18 +7,31 @@ import {
   Divider,
   Group,
   NativeSelect,
+  Stack,
   Text,
   Textarea,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { useDisclosure } from "@mantine/hooks";
-import ReactFlow, { NodeTypes, useNodesState } from "reactflow";
+import {
+  useDisclosure,
+  useResizeObserver,
+  useViewportSize,
+} from "@mantine/hooks";
+import { useEffect, useState } from "react";
+import ReactFlow, {
+  Connection,
+  Edge,
+  NodeTypes,
+  useEdgesState,
+  useNodesState,
+} from "reactflow";
 import "reactflow/dist/style.css";
-import { BubbleNode } from "./components/BubbleNode";
-import { RectangleNode } from "./components/RectangleNode";
-import { TestingNode } from "./components/TestingNode";
+
+import { BubbleNode } from "./components/nodes/BubbleNode";
+import { RectangleNode } from "./components/nodes/RectangleNode";
+import { TestingNode } from "./components/nodes/TestingNode";
 import { Minutes } from "./data/Minutes";
-import { BuildInitialNode } from "./services/utils";
+import { BuildInitialNode, GenerateId } from "./services/utils";
 
 const nodeTypes: NodeTypes = {
   bubble: BubbleNode,
@@ -26,11 +40,22 @@ const nodeTypes: NodeTypes = {
 };
 
 export function App() {
+  const [refResizeObserver, resizeObserver] = useResizeObserver();
+
+  const { width } = useViewportSize();
+
   const [nodes, setReactFlowNodes, onNodesChange] = useNodesState(
     BuildInitialNode()
   );
 
+  const [edges, setReactFlowEdges, onEdgesChange] = useEdgesState([]);
+
   const [opened, { toggle }] = useDisclosure();
+
+  const [swatches, setSwatches] =
+    useState<ReturnType<typeof generateColorsMap>>();
+
+  console.log("swatches: ", swatches);
 
   const form = useForm<{
     description: string;
@@ -48,6 +73,22 @@ export function App() {
     },
   });
 
+  useEffect(() => {
+    setSwatches(generateColorsMap(form.values["color"]));
+  }, [form.values]);
+
+  const onConnect = ({ source, target }: Connection) => {
+    if (!source || !target) return;
+
+    const edge: Edge = {
+      id: `edge-${source}-to-${target}-${GenerateId()}`,
+      source,
+      target,
+    };
+
+    setReactFlowEdges([...edges, edge]);
+  };
+
   return (
     <>
       <AppShell
@@ -64,7 +105,7 @@ export function App() {
           <div>BeatTask Logo</div>
         </AppShell.Header>
 
-        <AppShell.Navbar p="md">
+        <AppShell.Navbar p="md" ref={refResizeObserver}>
           <Text fw={400}>Tasks</Text>
 
           <Textarea
@@ -113,14 +154,26 @@ export function App() {
             {...form.getInputProps("type")}
           />
 
-          <ColorInput
-            label={"Node color"}
-            styles={{
-              label: { fontSize: 13, fontWeight: 350 },
-              input: { borderRadius: "10px" },
-            }}
-            {...form.getInputProps("color")}
-          />
+          <Stack>
+            <ColorInput
+              label={"Node color"}
+              styles={{
+                label: { fontSize: 13, fontWeight: 350 },
+                input: { borderRadius: "10px" },
+                swatch: {
+                  borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70% ",
+                },
+                swatches: {
+                  display: "flex",
+                  justifyContent: "center",
+                },
+              }}
+              format="hex"
+              swatchesPerRow={15}
+              swatches={swatches?.colors.slice(0, 5)}
+              {...form.getInputProps("color")}
+            />
+          </Stack>
 
           <Button
             variant="gradient"
@@ -133,7 +186,7 @@ export function App() {
               setReactFlowNodes([
                 ...nodes,
                 {
-                  id: "node-3",
+                  id: `node-${GenerateId()}`,
                   position: { x: 0, y: 0 },
                   data: {
                     id: "node-3",
@@ -151,12 +204,19 @@ export function App() {
         </AppShell.Navbar>
 
         <AppShell.Main>
-          <div style={{ width: 1000, height: 800 }}>
+          <div
+            style={{
+              width: width - resizeObserver.width - 100,
+              height: 800,
+            }}
+          >
             <ReactFlow
               nodes={nodes}
               nodeTypes={nodeTypes}
               onNodesChange={onNodesChange}
-              fitView
+              onEdgesChange={onEdgesChange}
+              edges={edges}
+              onConnect={onConnect}
             />
           </div>
         </AppShell.Main>

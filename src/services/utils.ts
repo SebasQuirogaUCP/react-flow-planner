@@ -1,3 +1,4 @@
+import { customAlphabet } from "nanoid";
 import { type Node } from "reactflow";
 import { CustomNode } from "../data/CustomNode";
 
@@ -37,7 +38,7 @@ export const BuildInitialNode = () => {
     const initialNode: Node<CustomNode>[] = [
         {
             id: "root",
-            position: { x: 0, y: 0 },
+            position: { x: 600, y: 0 },
             data: {
                 id: "root",
                 description: FromIntegerDayToDay(new Date().getDay()),
@@ -51,3 +52,8 @@ export const BuildInitialNode = () => {
 
     return initialNode;
 };
+
+export const GenerateId = (): string => {
+    const nanoId = customAlphabet("0123456789abcdefghijklmnopqrstuvwxyz", 5)
+    return nanoId()
+}
