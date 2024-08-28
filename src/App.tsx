@@ -1,94 +1,93 @@
-import { generateColorsMap } from "@mantine/colors-generator";
-import {
-  AppShell,
-  Burger,
-  Button,
-  ColorInput,
-  Divider,
-  Group,
-  NativeSelect,
-  Stack,
-  Text,
-  Textarea,
-} from "@mantine/core";
-import { useForm } from "@mantine/form";
+import { AppShell, Burger } from "@mantine/core";
 import {
   useDisclosure,
   useResizeObserver,
   useViewportSize,
 } from "@mantine/hooks";
-import { useEffect, useState } from "react";
+import { useCallback } from "react";
 import ReactFlow, {
+  type Node,
   Connection,
   Edge,
-  NodeTypes,
   useEdgesState,
   useNodesState,
 } from "reactflow";
 import "reactflow/dist/style.css";
-
-import { BubbleNode } from "./components/nodes/BubbleNode";
-import { RectangleNode } from "./components/nodes/RectangleNode";
-import { TestingNode } from "./components/nodes/TestingNode";
-import { Minutes } from "./data/Minutes";
-import { BuildInitialNode, GenerateId } from "./services/utils";
-
-const nodeTypes: NodeTypes = {
-  bubble: BubbleNode,
-  rectangle: RectangleNode,
-  testing: TestingNode,
-};
+import { NodeCreationForm } from "./components/NodeCreationForm";
+import { AppNodeTypes } from "./data/AppNodeTypes";
+import { CustomNodeData } from "./data/CustomNodeData";
+import { NodeForm } from "./data/NodeForm";
+import { GenerateId } from "./services/utils";
 
 export function App() {
   const [refResizeObserver, resizeObserver] = useResizeObserver();
 
   const { width } = useViewportSize();
 
-  const [nodes, setReactFlowNodes, onNodesChange] = useNodesState(
-    BuildInitialNode()
-  );
-
   const [edges, setReactFlowEdges, onEdgesChange] = useEdgesState([]);
+  const [nodes, setReactFlowNodes, onNodesChange] = useNodesState([]);
 
   const [opened, { toggle }] = useDisclosure();
 
-  const [swatches, setSwatches] =
-    useState<ReturnType<typeof generateColorsMap>>();
+  const onConnect = useCallback(
+    ({ source, target }: Connection) => {
+      if (!source || !target) return;
 
-  console.log("swatches: ", swatches);
+      const edge: Edge = {
+        id: `edge-${source}-to-${target}-${GenerateId()}`,
+        source,
+        target,
+      };
 
-  const form = useForm<{
-    description: string;
-    hours: string;
-    minutes: string;
-    color: string;
-    type: "testing" | "rectangle" | "test";
-  }>({
-    initialValues: {
-      color: "#90ee8f",
-      description: "",
-      hours: "0",
-      minutes: "20",
-      type: "rectangle",
+      setReactFlowEdges([...edges, edge]);
     },
-  });
+    [edges, setReactFlowEdges]
+  );
 
-  useEffect(() => {
-    setSwatches(generateColorsMap(form.values["color"]));
-  }, [form.values]);
+  const setNodes = useCallback(
+    (nodes: Node<CustomNodeData, string | undefined>[]) => {
+      setReactFlowNodes(nodes);
+    },
+    [setReactFlowNodes]
+  );
 
-  const onConnect = ({ source, target }: Connection) => {
-    if (!source || !target) return;
+  const onRemoveNode = useCallback(
+    (customNode: CustomNodeData) => {
+      console.info(customNode.id);
+      console.info("beforeUpdate: ", nodes);
+      const newNodes = nodes.filter((node) => node.id !== customNode.id);
+      console.log("newNodes: ", newNodes);
+      setNodes(newNodes);
+    },
 
-    const edge: Edge = {
-      id: `edge-${source}-to-${target}-${GenerateId()}`,
-      source,
-      target,
-    };
+    [nodes, setNodes]
+  );
 
-    setReactFlowEdges([...edges, edge]);
-  };
+  const handleCreateNode = useCallback(
+    ({ description, hours, minutes, type }: NodeForm) => {
+      const nodeId = `node-${GenerateId()}`;
+      setNodes([
+        ...nodes,
+        {
+          id: nodeId,
+          position: { x: 0, y: 0 },
+          data: {
+            id: nodeId,
+            description,
+            pomodoroTime: `${hours}:${minutes}`,
+            onSelectNode: (customNode: CustomNodeData) => {
+              console.info(customNode);
+            },
+            onRemoveNode,
+          },
+          type,
+        },
+      ]);
 
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [nodes, onRemoveNode, setNodes]
+  );
   return (
     <>
       <AppShell
@@ -106,101 +105,7 @@ export function App() {
         </AppShell.Header>
 
         <AppShell.Navbar p="md" ref={refResizeObserver}>
-          <Text fw={400}>Tasks</Text>
-
-          <Textarea
-            label={"Description"}
-            maxLength={50}
-            required
-            styles={{
-              label: { fontSize: 13, fontWeight: 350 },
-              input: { borderRadius: "10px" },
-              section: { fontSize: "5px" },
-            }}
-            placeholder={"Max 50 characters"}
-            {...form.getInputProps("description")}
-          />
-
-          <Group grow>
-            <NativeSelect
-              label="Hours"
-              data={["0", "1", "2"]}
-              styles={{
-                label: { fontSize: 13, fontWeight: 350 },
-                input: { borderRadius: "10px" },
-              }}
-              {...form.getInputProps("hours")}
-            />
-            <NativeSelect
-              label="Minutes"
-              data={Minutes}
-              styles={{
-                label: { fontSize: 13, fontWeight: 350 },
-                input: { borderRadius: "10px" },
-              }}
-              {...form.getInputProps("minutes")}
-            />
-          </Group>
-
-          <Divider my={"xs"} label="Customize Options" />
-
-          <NativeSelect
-            label="Node Type"
-            data={["rectangle", "bubble", "test"]}
-            styles={{
-              label: { fontSize: 13, fontWeight: 350 },
-              input: { borderRadius: "10px" },
-            }}
-            {...form.getInputProps("type")}
-          />
-
-          <Stack>
-            <ColorInput
-              label={"Node color"}
-              styles={{
-                label: { fontSize: 13, fontWeight: 350 },
-                input: { borderRadius: "10px" },
-                swatch: {
-                  borderRadius: "30% 70% 70% 30% / 30% 30% 70% 70% ",
-                },
-                swatches: {
-                  display: "flex",
-                  justifyContent: "center",
-                },
-              }}
-              format="hex"
-              swatchesPerRow={15}
-              swatches={swatches?.colors.slice(0, 5)}
-              {...form.getInputProps("color")}
-            />
-          </Stack>
-
-          <Button
-            variant="gradient"
-            mt={"md"}
-            styles={{
-              label: { fontSize: 13 },
-              root: { borderRadius: "10px" },
-            }}
-            onClick={() => {
-              setReactFlowNodes([
-                ...nodes,
-                {
-                  id: `node-${GenerateId()}`,
-                  position: { x: 0, y: 0 },
-                  data: {
-                    id: "node-3",
-                    color: form.values["color"],
-                    description: form.values["description"],
-                    pomodoroTime: `${form.values["hours"]}:${form.values["minutes"]}`,
-                  },
-                  type: form.values["type"],
-                },
-              ]);
-            }}
-          >
-            Create Task
-          </Button>
+          <NodeCreationForm createNode={handleCreateNode} />
         </AppShell.Navbar>
 
         <AppShell.Main>
@@ -212,7 +117,7 @@ export function App() {
           >
             <ReactFlow
               nodes={nodes}
-              nodeTypes={nodeTypes}
+              nodeTypes={AppNodeTypes}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               edges={edges}

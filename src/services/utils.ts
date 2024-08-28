@@ -1,6 +1,6 @@
 import { customAlphabet } from "nanoid";
 import { type Node } from "reactflow";
-import { CustomNode } from "../data/CustomNode";
+import { CustomNodeData } from "../data/CustomNodeData";
 
 export const FromIntegerDayToDay = (integerDay: number) => {
     switch (integerDay) {
@@ -35,7 +35,7 @@ export const FromIntegerDayToDay = (integerDay: number) => {
 };
 
 export const BuildInitialNode = () => {
-    const initialNode: Node<CustomNode>[] = [
+    const initialNode: Node<CustomNodeData>[] = [
         {
             id: "root",
             position: { x: 600, y: 0 },
